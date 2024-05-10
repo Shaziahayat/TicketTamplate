@@ -1,0 +1,214 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+@{
+    // Get the current culture
+    var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
+    <style>
+        html,
+        body {
+            position: relative;
+            height: 90% !important;
+        }
+
+        body {
+            background: #eee;
+           /*  font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;  */
+            font-size: 14px;
+            height:100px;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+
+        .swiper {
+            width: 80% !important;
+            height: 80% !important;
+        }
+        
+        .swiper-slide {
+            text-align: center;
+            font-size: 14px;
+          /*     background: #fff; */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100% !important;
+            height: 50% !important;
+           
+            /* border-radius: 2vh;
+            padding: 10px !important;
+            border: 1px solid #ccc; */
+           /*  border-radius: 2vh;
+            box-shadow: 0vh 1vh 1.5vh rgba(0, 0, 0, 0.4); */
+        }
+
+            .swiper-slide img {
+                display: block;
+                object-fit: cover;
+                width: 60% !important;
+                height: 60% !important;
+                margin: auto !important;
+              
+            }
+
+
+        .swiper-pagination.swiper-pagination-bullets {
+            bottom: 15em !important;
+            position: static;
+        }
+
+        #footer {
+            text-align: center;
+            font-style: italic;
+        }
+        
+        .ticket-card {
+            background: #fff;
+            padding: 15px;
+            margin: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 2vh; 
+            box-shadow: 0vh 1vh 1.5vh rgba(0, 0, 0, 0.2); 
+       }
+
+        .expired-ticket {
+            border: 2px solid red; 
+            opacity: 0.6; 
+        }
+       
+    </style>
+</head>
+<body>
+    <main>
+        <div class="container">
+            <div id="logo" class="text-center mt-3">
+                <img src="~/image.png" alt="Logo" width="300">
+                <h1>@Model.TicketText</h1>
+                <div class="ticket-info">
+                    @foreach (var kundInfo in Model.KundInfos)
+                    {
+                        <strong>
+                            <span class="ticket-label">@Model.BookingNumberLabel: </span>
+                            <span class="ticket-value">@kundInfo.BokningsNr</span>
+                        </strong>
+                        <br>
+                        <strong class="ticket-label">@Model.NameLabel: </strong>
+                        <span class="ticket-value">@kundInfo.Bokatav</span>
+                        <br>
+                        <strong class="ticket-label">@Model.EmailLabel: </strong>
+                        <span class="ticket-value">@kundInfo.Email</span>
+                        <br>
+                        <strong class="ticket-label">@Model.PhoneLabel: </strong>
+                        <span class="ticket-value">@kundInfo.Mobile</span>
+                        <br>
+                        <strong class="ticket-label">@Model.TicketCountLabel: </strong>
+                        <span class="ticket-value">@Model.TicketCount</span>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="swiper mySwiper">
+            <div class="swiper-wrapper">
+                <!-- Ticket Cards -->
+                @if (Model.Tickets != null && Model.Tickets.Any())
+                {
+                    int ticketNumber = 0;
+                    foreach (var ticket in Model.Tickets)
+                    {
+                        ticketNumber++;
+                        var expirationTime = ticket.dateEnd.Date.AddDays(1).AddTicks(-1); // End of the current day
+                        var isExpired = DateTime.Now > expirationTime;
+                        <div class="swiper-slide text-center">
+                            <div class="ticket-card">
+                                <p class="text-center"><strong>@Model.NumberOfTicketsLabel</strong> @ticketNumber av @Model.Tickets.Count</p>
+                                <h3 class="text-center">@ticket.namn1</h3>
+                                <p class="text-center"><strong>@Model.DateLabel:</strong> @ticket.datumStart</p>
+                                <h6 class="text-center"> @ticket.Artikelnamn, @ticket.Pris Kr</h6>
+                                <strong class="text-center">@ticket.Venue</strong>
+                                <p class="text-center"> @ticket.Namn</p>
+                                @if (!isExpired)
+                                {
+                             
+                                    @if (!string.IsNullOrEmpty(ticket.barcode))
+                                    {
+                                        <img src="@Model.GenerateQRCodeUri(ticket.barcode)" alt="QR Code" class="qr-code" />
+                                    }
+                                    <h7 class="text-center"> @ticket.barcode</h7>
+                                    <p class="text-center"><strong>@Model.ExpirationDateLabel: </strong>@ticket.dateEnd.ToShortDateString()</p>
+                              
+                                }
+                                else
+                                {
+                                    <h3 class="text-center text-danger"><strong>@Model.TicketExpired</strong></h3>
+                                    <p class="text-center"><strong>@Model.ExpirationDateLabel: </strong>@ticket.dateEnd.ToShortDateString()</p>
+                                }
+                                <a href="https://master.actorsmartbook.se/">@Model.TicketPurchaseLink</a>
+                                <br>
+                                @if (Model.IsIOSDevice())
+                                {
+                                    <form method="post" action="@Url.Page("Index", "OnGetSaveToWalletAsync", new { webbUid = ticket.WebbUid })">
+                                        <button type="submit">Save to Wallet</button>
+                                    </form>
+
+
+                                }
+                                else
+                                {
+                                    <p>Save to Wallet is only available on iOS devices.</p>
+                                }
+                                
+                            </div>
+                        </div>
+                    }
+                }
+                else if (Model.Tickets != null && !Model.Tickets.Any() && !string.IsNullOrEmpty(Request.Query["webbUid"]))
+                {
+                    <div class="swiper-slide">
+                        <div class="alert alert-info" role="alert">
+                            No tickets found for the provided WebbUid.
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="swiper-pagination"></div>
+        <br />
+        <!-- Swiper JS -->
+        <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+        <!-- Initialize Swiper for Ticket Cards -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var swiper = new Swiper(".mySwiper", {
+                    pagination: {
+                        el: ".swiper-pagination",
+                    },
+                });
+            });
+        </script>
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+    </main>
+    <footer id="footer">
+        <h5 id="lebel_Vitec">* Powered by Vitec Smart Visitor System AB *</h5>
+    </footer>
+</body>
+</html>
+
+
+
+
+

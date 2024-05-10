@@ -1,0 +1,11 @@
+﻿
+
+/* Media query for mobile devices */
+@media screen and (max-width: 65vh) {
+  
+    body {
+        background-color: #f8f9fa;
+        padding: 0em;
+        margin: 0em;
+    }
+}
